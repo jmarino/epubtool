@@ -8,10 +8,10 @@ import re
 
 def handleParameters():
     parser = argparse.ArgumentParser(description='Update series metadata in epub.')
-    parser.add_argument('filename', metavar='EPUB_FILE', type=str,
-                        help='epub file')
     parser.add_argument('series', metavar='SERIES_INFO', type=str,
                         help='Series info with format "Series Name:2"')
+    parser.add_argument('filename', metavar='EPUB_FILE', type=str,
+                        help='epub file')
     args = parser.parse_args()
     return args
 
