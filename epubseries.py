@@ -17,6 +17,8 @@ Writes output to new .epub.new file."""
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument('seriesinfo', type=str, help='Series info with format "Series Name:2"')
     parser.add_argument('filename', type=str, help='epub file')
+    parser.add_argument('-c', '--calibre', action='store_true', help='use Calibre series metadata format (default)')
+    parser.add_argument('-3', '--epub3', action='store_true', help='use EPUB3 series metadata format')
     args = parser.parse_args()
     return args
 
@@ -106,6 +108,15 @@ def main():
     args = handleParameters()
     epub_filename = args.filename
     series_title, series_number = parseSeries(args.series)
+
+    if args.epub3:
+        settings['epub3'] = True
+        settings['calibre'] = False
+    #
+    # if both -3 and -c are given, write both formats
+    if args.calibre:
+        settings['calibre'] = True
+    #
 
     if series_number == None:
         print(f"ERROR: couldn't parse series info: '{args.series}'")
