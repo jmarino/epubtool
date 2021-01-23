@@ -6,6 +6,11 @@ import xml.etree.ElementTree as etree
 import re
 
 
+settings = {'epub3': False,
+            'calibre': True
+            }
+
+
 def handleParameters():
     parser = argparse.ArgumentParser(description='Update series metadata in epub.')
     parser.add_argument('series', metavar='SERIES_INFO', type=str,
@@ -57,18 +62,20 @@ def addSeriesToMetadata(xml, series_title, series_number):
     # </meta>
     # <meta refines="#c01" property="collection-type">set</meta>
     # <meta refines="#c01" property="group-position">2</meta>
-    meta = etree.SubElement(metadata, 'meta', {'property': 'belongs-to-collection', 'id':'series0'})
-    meta.text = series_title
-    meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'collection-type'})
-    meta.text = 'set'
-    meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'group-position'})
-    meta.text = f'{series_number}'
+    if settings['epub3']:
+        meta = etree.SubElement(metadata, 'meta', {'property': 'belongs-to-collection', 'id':'series0'})
+        meta.text = series_title
+        meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'collection-type'})
+        meta.text = 'set'
+        meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'group-position'})
+        meta.text = f'{series_number}'
 
     # Add series info to metadata in Calibre format
     # <meta name="calibre:series" content="The Lord of the Rings"/>
     # <meta name="calibre:series_index" content="2"/>
-    meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series', 'content': series_title})
-    meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series_index', 'content': series_number})
+    if settings['calibre']:
+        meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series', 'content': series_title})
+        meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series_index', 'content': series_number})
 #
 
 
