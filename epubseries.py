@@ -12,11 +12,11 @@ settings = {'epub3': False,
 
 
 def handleParameters():
-    parser = argparse.ArgumentParser(description='Update series metadata in epub.')
-    parser.add_argument('series', metavar='SERIES_INFO', type=str,
-                        help='Series info with format "Series Name:2"')
-    parser.add_argument('filename', metavar='EPUB_FILE', type=str,
-                        help='epub file')
+    desc = """Update series metadata in epub. By default it uses calibre metadata format.
+Writes output to new .epub.new file."""
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument('seriesinfo', type=str, help='Series info with format "Series Name:2"')
+    parser.add_argument('filename', type=str, help='epub file')
     args = parser.parse_args()
     return args
 
