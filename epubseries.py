@@ -63,6 +63,12 @@ def addSeriesToMetadata(xml, series_title, series_number):
     meta.text = 'set'
     meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'group-position'})
     meta.text = f'{series_number}'
+
+    # Add series info to metadata in Calibre format
+    # <meta name="calibre:series" content="The Lord of the Rings"/>
+    # <meta name="calibre:series_index" content="2"/>
+    meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series', 'content': series_title})
+    meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series_index', 'content': series_number})
 #
 
 
