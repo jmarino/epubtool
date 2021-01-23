@@ -107,7 +107,7 @@ def updateZipFile(zip_filename, content_filename, elem_tree):
 def main():
     args = handleParameters()
     epub_filename = args.filename
-    series_title, series_number = parseSeries(args.series)
+    series_title, series_number = parseSeries(args.seriesinfo)
 
     if args.epub3:
         settings['epub3'] = True
