@@ -179,6 +179,42 @@ def setTitle(xml, newTitle):
     metadata.insert(nodeIndex, titleNode)
 #setTitle
 
+def setAuthor(xml, newAuthors):
+    metadata = xml.find('ns0:metadata', namespaces=NS)
+    oldAuthors = xml.findall('ns0:metadata/dc:creator', namespaces=NS)
+    if metadata == None or len(oldAuthors) == 0:
+        raise Exception("Can't find authors in metadata")
+    #
+
+    # delete old authors
+    nodeIndex = list(metadata).index(oldAuthors[0])
+    for authorNode in oldAuthors:
+        # delete any nodes that refine this author: with attrib refines="#creator01"
+        authorId = authorNode.attrib['id'] if 'id' in authorNode.attrib else None
+        deleteRefines(metadata, authorId)
+
+        # delete author node
+        metadata.remove(authorNode)
+    #for
+
+    # add new authors
+    for i in range(len(newAuthors)):
+        authorId = f'creator{(i+1):02}'
+        authorName = newAuthors[i]
+        authorNode = ET.Element('{%s}creator' % NS['dc'], attrib={'id': authorId})
+        authorNode.text = authorName
+        authorNode.tail = '\n'
+        metadata.insert(nodeIndex, authorNode)
+        nodeIndex += 1
+
+        metaNode = ET.Element('{%s}meta' % NS['ns0'], attrib={'id': 'role', 'refines': f'#{authorId}'})
+        metaNode.text = 'aut'
+        metaNode.tail = '\n'
+        metadata.insert(nodeIndex, metaNode)
+        nodeIndex += 1
+    #for
+#setAuthor
+
 def main():
     args = handleParameters()
     epub_filename = args.filename
