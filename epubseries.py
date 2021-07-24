@@ -48,6 +48,24 @@ def findContent(zfile):
     return xml[0][0].attrib['full-path']        # <container> <rootfiles> <rootfile full-path="...">
 #findContent
 
+def readEpubFile(fileName):
+    try:
+        zfile = zipfile.ZipFile(fileName)
+        contentFileName = findContent(zfile)
+        #print(f"Found: {fileName}")
+    except FileNotFoundError:
+        print(f"ERROR: File '{fileName}' not found. Bailing out.")
+        return
+    #try
+
+    with zfile.open(contentFileName) as file:
+        xml = ET.fromstring(file.read())
+    #with
+    zfile.close()
+
+    return xml, contentFileName
+#readEpubFile
+
 def printMetadata(xml):
     metadata = xml.find('ns0:metadata', namespaces=NS)
     if metadata == None:
@@ -234,24 +252,12 @@ def main():
         return
     #
 
-    try:
-        zfile = zipfile.ZipFile(epub_filename)
-        content_filename = findContent(zfile)
-        #print(f"Found: {content_filename}")
-    except FileNotFoundError:
-        print(f"ERROR: File '{epub_filename}' not found. Bailing out.")
-        return
-    #try
-
-    with zfile.open(content_filename) as file:
-        xml = ET.fromstring(file.read())
-    #with
-    zfile.close()
+    xml, contentFileName = readEpubFile(epub_filename)
 
 
     addSeriesToMetadata(xml, series_title, series_number)
 
-    updateZipFile(epub_filename, content_filename, xml)
+    updateZipFile(epub_filename, contentFileName, xml)
 #
 
 
