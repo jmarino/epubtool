@@ -136,7 +136,7 @@ def addSeriesToMetadata(xml, series_title, series_number):
 #
 
 
-def updateZipFile(zip_filename, content_filename, xml):
+def updateZipFile(zip_filename, contentFileName, xml):
     elem_tree = ET.ElementTree(xml)
 
     new_zip_filename = zip_filename + '.new'
@@ -145,7 +145,7 @@ def updateZipFile(zip_filename, content_filename, xml):
         with zipfile.ZipFile(new_zip_filename, 'w') as zout:
             zout.comment = zin.comment # preserve the comment
             for item in zin.infolist():
-                if item.filename != content_filename:
+                if item.filename != contentFileName:
                     zout.writestr(item, zin.read(item.filename))
                 #
             #for
@@ -153,7 +153,7 @@ def updateZipFile(zip_filename, content_filename, xml):
     #with
 
     with zipfile.ZipFile(new_zip_filename, 'a', compression=zipfile.ZIP_DEFLATED) as zout:
-        with zout.open(content_filename, 'w') as file:
+        with zout.open(contentFileName, 'w') as file:
             elem_tree.write(file)
         #
     #
