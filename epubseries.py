@@ -10,6 +10,7 @@ settings = {'epub3': False,
             'calibre': True
             }
 
+# Namespaces
 NS = {'ns0': 'http://www.idpf.org/2007/opf',
       'dc': 'http://purl.org/dc/elements/1.1/'}
 
@@ -191,6 +192,8 @@ def setTitle(xml, newTitle):
         metadata.remove(titleNode)
     #for
 
+    # add new title node:
+    #   <dc:title>Title</dc:title>
     titleNode = ET.Element('{%s}title' % NS['dc'])
     titleNode.text = newTitle
     titleNode.tail = '\n'
@@ -215,7 +218,9 @@ def setAuthor(xml, newAuthors):
         metadata.remove(authorNode)
     #for
 
-    # add new authors
+    # add new author nodes:
+    #   <dc:creator>Name</dc:creator>
+    #   <ns0:meta refines="id">aut</ns0:meta>
     for i in range(len(newAuthors)):
         authorId = f'creator{(i+1):02}'
         authorName = newAuthors[i]
