@@ -142,6 +142,42 @@ def updateZipFile(zip_filename, content_filename, xml):
     print(f"New epub file: '{new_zip_filename}'")
 #
 
+def deleteRefines(metadataNode, idName):
+    if idName == None:
+        return
+
+    for refineNode in metadataNode.findall(f'.//*[@refines="#{idName}"]'):
+        metadataNode.remove(refineNode)
+    #if
+#deleteRefines
+
+def setTitle(xml, newTitle):
+    metadata = xml.find('ns0:metadata', namespaces=NS)
+    oldTitles = xml.findall('ns0:metadata/dc:title', namespaces=NS)
+    if metadata == None or len(oldTitles) == 0:
+        raise Exception("Can't find title in metadata")
+    #
+
+    if len(oldTitles) > 1:
+        print(f'WARNING: found {len(oldTitles)} in metadata section')
+    #if
+
+    # delete old title(s)
+    nodeIndex = list(metadata).index(oldTitles[0])
+    for titleNode in oldTitles:
+        # delete any nodes that refine this title
+        titleId = titleNode.attrib['id'] if 'id' in titleNode.attrib else None
+        deleteRefines(metadata, titleId)
+
+        # delete title node
+        metadata.remove(titleNode)
+    #for
+
+    titleNode = ET.Element('{%s}title' % NS['dc'])
+    titleNode.text = newTitle
+    titleNode.tail = '\n'
+    metadata.insert(nodeIndex, titleNode)
+#setTitle
 
 def main():
     args = handleParameters()
