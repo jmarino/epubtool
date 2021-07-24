@@ -2,13 +2,16 @@
 
 import argparse
 import zipfile
-import xml.etree.ElementTree as etree
+import xml.etree.ElementTree as ET
 import re
 
 
 settings = {'epub3': False,
             'calibre': True
             }
+
+NS = {'ns0': 'http://www.idpf.org/2007/opf',
+      'dc': 'http://purl.org/dc/elements/1.1/'}
 
 
 def handleParameters():
@@ -39,7 +42,7 @@ def parseSeries(series_data):
 def findContent(zfile):
     """Find location of 'content.opf' file. This is stored in 'META-INF/container.xml'"""
     with zfile.open("META-INF/container.xml") as file:
-        xml = etree.fromstring(file.read())
+        xml = ET.fromstring(file.read())
     #with
 
     return xml[0][0].attrib['full-path']        # <container> <rootfiles> <rootfile full-path="...">
@@ -65,23 +68,25 @@ def addSeriesToMetadata(xml, series_title, series_number):
     # <meta refines="#c01" property="collection-type">set</meta>
     # <meta refines="#c01" property="group-position">2</meta>
     if settings['epub3']:
-        meta = etree.SubElement(metadata, 'meta', {'property': 'belongs-to-collection', 'id':'series0'})
+        meta = ET.SubElement(metadata, 'meta', {'property': 'belongs-to-collection', 'id':'series0'})
         meta.text = series_title
-        meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'collection-type'})
+        meta = ET.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'collection-type'})
         meta.text = 'set'
-        meta = etree.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'group-position'})
+        meta = ET.SubElement(metadata, 'meta', {'refines': '#series0', 'property': 'group-position'})
         meta.text = f'{series_number}'
 
     # Add series info to metadata in Calibre format
     # <meta name="calibre:series" content="The Lord of the Rings"/>
     # <meta name="calibre:series_index" content="2"/>
     if settings['calibre']:
-        meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series', 'content': series_title})
-        meta = etree.SubElement(metadata, 'meta', {'name': 'calibre:series_index', 'content': series_number})
+        meta = ET.SubElement(metadata, 'meta', {'name': 'calibre:series', 'content': series_title})
+        meta = ET.SubElement(metadata, 'meta', {'name': 'calibre:series_index', 'content': series_number})
 #
 
 
-def updateZipFile(zip_filename, content_filename, elem_tree):
+def updateZipFile(zip_filename, content_filename, xml):
+    elem_tree = ET.ElementTree(xml)
+
     new_zip_filename = zip_filename + '.new'
     # create a temp copy of the archive without filename
     with zipfile.ZipFile(zip_filename, 'r') as zin:
@@ -133,15 +138,14 @@ def main():
     #try
 
     with zfile.open(content_filename) as file:
-        xml = etree.fromstring(file.read())
+        xml = ET.fromstring(file.read())
     #with
     zfile.close()
 
 
     addSeriesToMetadata(xml, series_title, series_number)
 
-    elem_tree = etree.ElementTree(xml)
-    updateZipFile(epub_filename, content_filename, elem_tree)
+    updateZipFile(epub_filename, content_filename, xml)
 #
 
 
