@@ -48,6 +48,40 @@ def findContent(zfile):
     return xml[0][0].attrib['full-path']        # <container> <rootfiles> <rootfile full-path="...">
 #findContent
 
+def printMetadata(xml):
+    metadata = xml.find('ns0:metadata', namespaces=NS)
+    if metadata == None:
+        raise Exception("Can't find metadata object")
+    #
+    title = metadata.find('dc:title', namespaces=NS)
+    authors = [a.text for a in metadata.findall('dc:creator', namespaces=NS)]
+
+    print('Title: {}'.format(title.text))
+    print('Author: {}'.format(", ".join(authors)))
+
+    calName_ele = metadata.find("meta[@name='calibre:series']")
+    calNumber_ele = metadata.find("meta[@name='calibre:series_index']")
+    calName = calName_ele.attrib['content'] if calName_ele!=None else ''
+    calNumber = calNumber_ele.attrib['content'] if calNumber_ele!=None else ''
+
+    epub3Name_ele = metadata.find("meta[@property='belongs-to-collection']")
+    epub3Number = ''
+    if epub3Name_ele:
+        seriesId = epub3Name_ele.attrib['id']
+        epub3Number_ele = metadata.find("meta[@refines='{}']".format(seriesId))
+        epub3Number = epub3Number_ele.text if epub3Number_ele!=None else ''
+    #fi
+    epub3Name = epub3Name_ele.text if epub3Name_ele!=None else ''
+
+    if len(calName) > 0:
+        print("Series: {} : {}  (calibre)".format(calName, calNumber))
+    #if
+    if len(epub3Name) > 0:
+        print("Series: {} : {}  (calibre)".format(epub3Name, epub3Number))
+    #if
+
+#printMetadata
+
 
 def addSeriesToMetadata(xml, series_title, series_number):
     """Find <metadata> element and add series info at the end."""
