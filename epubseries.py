@@ -131,7 +131,7 @@ class Epub:
         if len(authors) == 1:
             print(f'  Author: {authors[0]}')
         else:
-            authorsStr = ", ".join(self._authors)
+            authorsStr = ", ".join(authors)
             print(f'  Authors: {authorsStr}')
         #if
 
