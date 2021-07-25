@@ -5,6 +5,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 import re
 import copy
+import sys
 
 
 #NOTE: see 2034 kepub
@@ -291,10 +292,15 @@ def parseSeries(series_data):
 
 def main():
     args = handleParameters()
-    epub_filename = args.filename
 
-    epub = Epub(epub_filename)
+    epub = Epub(args.filename)
     epub.readFile()
+
+    # only filename given, print info about file
+    if len(sys.argv) == 2:
+        epub.printInfo()
+        return
+    #if
 
     fileModified = False
 
