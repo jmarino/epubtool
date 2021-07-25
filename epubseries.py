@@ -98,12 +98,24 @@ class Epub:
     #printMetadata
 
     def getTitle(self):
-        titleNode = self._metadataNode.find('dc:title', namespaces=Epub.NS)
-        if titleNode == None:
+        title = None
+        subtitle = None
+        titleNodes = self._metadataNode.findall('dc:title', namespaces=Epub.NS)
+        for node in titleNodes:
+            refinesNode = self.findRefines(node, 'title-type')
+            if refinesNode != None:
+                if refinesNode.text == 'main':
+                    title = node.text
+                elif refinesNode.text == 'subtitle':
+                    subtitle = node.text
+                #if
+            #if
+        #for
+        if title == None:
             print("WARNING: unable to find title")
-            return ""
+            title = '<missing>'
         #
-        return titleNode.text
+        return title, subtitle
     #getTitle
 
     def getAuthors(self):
@@ -122,12 +134,15 @@ class Epub:
     #getAuthors
 
     def printInfo(self):
-        title = self.getTitle()
+        title, subtitle = self.getTitle()
         authors = self.getAuthors()
 
         print(f'File: {self._fileName}')
         print(f'  Format: ePub version {self._version}')
         print(f'  Title: {title}')
+        if subtitle != None:
+            print(f'         {subtitle}')
+
         if len(authors) == 1:
             print(f'  Author: {authors[0]}')
         else:
