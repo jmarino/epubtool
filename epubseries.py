@@ -157,42 +157,103 @@ class Epub:
         #if
     #printInfo
 
-    def deleteRefines(self, idName):
+    def findRefinesById(self, idName, propertyName):
+        """Find a meta refines node that refines id 'idName' and has property 'propertyName'"""
+        if idName == None:
+            return None
+        for node in self._metadataNode.findall('./*[@refines="#{idName}"]'):
+            if 'property' in node.attrib and node.attrib['property'] == propertyName:
+                return node
+            #
+        #for
+        return None
+    #findRefinesById
+
+    def findRefines(self, node, propertyName):
+        """Find a meta refines node that refines id 'idName' and has property 'propertyName'"""
+        if node == None or not 'id' in node.attrib:
+            return None
+        idName = node.attrib['id']
+        for node in self._metadataNode.findall('./*[@refines="#{idName}"]'):
+            if 'property' in node.attrib and node.attrib['property'] == propertyName:
+                return node
+            #
+        #for
+        return None
+    #findRefines
+
+
+    def deleteRefinesById(self, idName):
+        """Delete refines associated with 'idName'"""
         if idName == None:
             return
 
         for refineNode in self._metadataNode.findall(f'.//*[@refines="#{idName}"]'):
             self._metadataNode.remove(refineNode)
         #if
+    #deleteRefinesById
+
+    def deleteRefines(self, node):
+        """Delete refines associated with 'node'"""
+        if node == None:
+            return
+
+        if 'id' in node.attrib:
+            idName = node.attrib['id']
+            for refineNode in self._metadataNode.findall(f'.//*[@refines="#{idName}"]'):
+                self._metadataNode.remove(refineNode)
+            #for
+        #if
     #deleteRefines
 
-    def setTitle(self, newTitle):
-        oldTitles = self._xml.findall('ns0:metadata/dc:title', namespaces=Epub.NS)
-        if len(oldTitles) == 0:
+    def deleteNode(self, node):
+        """Delete node with all its refines"""
+        if node == None:
+            return
+        #if
+        self.deleteRefines(node)
+        self._metadataNode.remove(node)
+    #deleteNode
+
+    def setTitle(self, newTitle, newSubtitle):
+        titleNodes = self._xml.findall('ns0:metadata/dc:title', namespaces=Epub.NS)
+        if len(titleNodes) == 0:
             raise Exception("Can't find title in metadata")
         #
 
-        if len(oldTitles) > 1:
-            print(f'WARNING: found {len(oldTitles)} in metadata section')
+        maintitleNode = None
+        subtitleNode = None
+        for node in titleNodes:
+            refinesNode = self.findRefines(node, 'title-type')
+            if refinesNode != None:
+                if refinesNode.text == "main":
+                    maintitleNode = node
+                elif refinesNode.text == 'subtitle':
+                    subtitleNode = node
+                #if
+            #if
+        #for
+        if maintitleNode == None:
+            maintitleNode = titleNodes[0]
+
+        if newTitle != None:
+            maintitleNode.text = newTitle
+            maintitleNode.tail = '\n'
         #if
 
-        # delete old title(s)
-        nodeIndex = list(self._metadataNode).index(oldTitles[0])
-        for titleNode in oldTitles:
-            # delete any nodes that refine this title
-            titleId = titleNode.attrib['id'] if 'id' in titleNode.attrib else None
-            self.deleteRefines(titleId)
-
-            # delete title node
-            self._metadataNode.remove(titleNode)
-        #for
-
-        # add new title node:
-        #   <dc:title>Title</dc:title>
-        titleNode = ET.Element('{%s}title' % Epub.NS['dc'])
-        titleNode.text = newTitle
-        titleNode.tail = '\n'
-        self._metadataNode.insert(nodeIndex, titleNode)
+        if newSubtitle == None:
+            # no subtitle provided and file had one, delete it
+            if subtitleNode != None:
+                self.deleteNode(subtitleNode)
+            #
+        else:
+            # subtitle provided, overwrite existing or create new one
+            if subtitleNode == None:
+                subtitleNode = ET.SubElement(self._metadataNode, '{%s}title' % Epub.NS['dc'])
+            #if
+            subtitleNode.text = newSubtitle
+            subtitleNode.tail = '\n'
+        #if
     #setTitle
 
     def setAuthor(xml, newAuthors):
@@ -204,12 +265,7 @@ class Epub:
         # delete old authors
         nodeIndex = list(self._metadataNode).index(oldAuthors[0])
         for authorNode in oldAuthors:
-            # delete any nodes that refine this author: with attrib refines="#creator01"
-            authorId = authorNode.attrib['id'] if 'id' in authorNode.attrib else None
-            self.deleteRefines(authorId)
-
-            # delete author node
-            self._metadataNode.remove(authorNode)
+            self.deleteNode(authorNode)
         #for
 
         # add new author nodes:
@@ -273,6 +329,7 @@ Writes output to new .epub.new file."""
     parser.add_argument('-i', '--info',  action='store_true', help='Print info about ebook')
     parser.add_argument('-s', '--series', nargs=2, help='Set series info (Ex: -s "Series Name" 2)', metavar=('NAME', 'NUMBER'))
     parser.add_argument('-t', '--title', type=str, help='Set title')
+    parser.add_argument('-u', '--subtitle', type=str, help='Set subtitle')
     parser.add_argument('-c', '--calibre', action='store_true', help='use Calibre series metadata format (default)')
     parser.add_argument('-3', '--epub3', action='store_true', help='use EPUB3 series metadata format')
     args = parser.parse_args()
@@ -320,8 +377,8 @@ def main():
         fileModified = True
     #if
 
-    if args.title != None:
-        epub.setTitle(args.title)
+    if args.title != None or args.subtitle != None:
+        epub.setTitle(args.title, args.subtitle)
         fileModified = True
     #if
 
