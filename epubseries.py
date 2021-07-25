@@ -171,12 +171,12 @@ class Epub:
 
     def findRefines(self, node, propertyName):
         """Find a meta refines node that refines id 'idName' and has property 'propertyName'"""
-        if node == None or not 'id' in node.attrib:
+        if node == None or (not 'id' in node.attrib):
             return None
         idName = node.attrib['id']
-        for node in self._metadataNode.findall('./*[@refines="#{idName}"]'):
-            if 'property' in node.attrib and node.attrib['property'] == propertyName:
-                return node
+        for metaNode in self._metadataNode.findall(f'./*[@refines="#{idName}"]'):
+            if 'property' in metaNode.attrib and metaNode.attrib['property'] == propertyName:
+                return metaNode
             #
         #for
         return None
