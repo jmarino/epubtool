@@ -232,8 +232,10 @@ class Epub:
         #for
     #setAuthor
 
-    def setSeriesInfo(self, seriesTitle, seriesNumber):
+    def setSeriesInfo(self, seriesInfo):
         """Find <metadata> element and add series info at the end."""
+
+        seriesTitle, seriesNumber = seriesInfo
 
         # add series info to metadata
         # <meta property="belongs-to-collection" id="c01">
@@ -269,7 +271,7 @@ Writes output to new .epub.new file."""
     parser.add_argument('filename', type=str, help='epub file')
     parser.add_argument('-m', '--metadata', action='store_true', help='Dump xml metadata')
     parser.add_argument('-i', '--info',  action='store_true', help='Print info about ebook')
-    parser.add_argument('-s', '--series', type=str, help='Set series info with format "Series Name:2"')
+    parser.add_argument('-s', '--series', nargs=2, help='Set series info (Ex: -s "Series Name" 2)', metavar=('NAME', 'NUMBER'))
     parser.add_argument('-t', '--title', type=str, help='Set title')
     parser.add_argument('-c', '--calibre', action='store_true', help='use Calibre series metadata format (default)')
     parser.add_argument('-3', '--epub3', action='store_true', help='use EPUB3 series metadata format')
@@ -314,14 +316,7 @@ def main():
     #
 
     if args.series != None:
-        series_title, series_number = parseSeries(args.series)
-
-        if series_number == None:
-            print(f"ERROR: couldn't parse series info: '{args.series}'")
-            return
-        #if
-
-        epub.setSeriesInfo(series_title, series_number)
+        epub.setSeriesInfo(args.series)
         fileModified = True
     #if
 
