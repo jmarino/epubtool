@@ -8,7 +8,6 @@ import copy
 import sys
 
 
-#NOTE: see 2034 kepub
 #**TODO** remove old series info before adding new one
 
 
