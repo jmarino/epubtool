@@ -271,35 +271,39 @@ class Epub:
         #if
     #setTitle
 
-    def setAuthor(xml, newAuthors):
-        oldAuthors = self._xml.findall('ns0:metadata/dc:creator', namespaces=Epub.NS)
-        if len(oldAuthors) == 0:
+    def setAuthor(self, newAuthors):
+        authorNodes = self._xml.findall('ns0:metadata/dc:creator', namespaces=Epub.NS)
+        if len(authorNodes) == 0:
             raise Exception("Can't find authors in metadata")
-        #
+        #if
 
-        # delete old authors
-        nodeIndex = list(self._metadataNode).index(oldAuthors[0])
-        for authorNode in oldAuthors:
-            self.deleteNode(authorNode)
+        index = list(self._metadataNode).index(authorNodes[0])
+        # delete all existing authors first
+        for node in authorNodes:
+            self.deleteNode(node)
         #for
 
-        # add new author nodes:
-        #   <dc:creator>Name</dc:creator>
-        #   <ns0:meta refines="id">aut</ns0:meta>
+        # add new authors
         for i in range(len(newAuthors)):
-            authorId = f'creator{(i+1):02}'
-            authorName = newAuthors[i]
-            authorNode = ET.Element('{%s}creator' % Epub.NS['dc'], attrib={'id': authorId})
-            authorNode.text = authorName
-            authorNode.tail = '\n'
-            self._metadataNode.insert(nodeIndex, authorNode)
-            nodeIndex += 1
+            idName = f'creator{i+1:02}'
+            nodes = list()
+            newNode = ET.Element('{%s}creator' % Epub.NS['dc'], attrib={'id': idName})
+            newNode.text = newAuthors[i]
+            newNode.tail = '\n'
+            self._metadataNode.insert(index, newNode)
+            index += 1
 
-            metaNode = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'id': 'role', 'refines': f'#{authorId}'})
-            metaNode.text = 'aut'
-            metaNode.tail = '\n'
-            self._metadataNode.insert(nodeIndex, metaNode)
-            nodeIndex += 1
+            newNode = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'property': 'role', 'id': f'#{idName}'})
+            newNode.text = 'aut'
+            self._metadataNode.insert(index, newNode)
+            index += 1
+
+            if len(newAuthors) > 1:
+                newNode = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'property': 'display-seq', 'id': f'#{idName}'})
+                newNode.text = f'{i}'
+                self._metadataNode.insert(index, newNode)
+                index += 1
+            #if
         #for
     #setAuthor
 
@@ -345,6 +349,7 @@ Writes output to new .epub.new file."""
     parser.add_argument('-s', '--series', nargs=2, help='Set series info (Ex: -s "Series Name" 2)', metavar=('NAME', 'NUMBER'))
     parser.add_argument('-t', '--title', type=str, help='Set title')
     parser.add_argument('-u', '--subtitle', type=str, help='Set subtitle')
+    parser.add_argument('-a', '--author', nargs='+', help='Set author(s)')
     parser.add_argument('-c', '--calibre', action='store_true', help='use Calibre series metadata format (default)')
     parser.add_argument('-3', '--epub3', action='store_true', help='use EPUB3 series metadata format')
     args = parser.parse_args()
@@ -394,6 +399,11 @@ def main():
 
     if args.title != None or args.subtitle != None:
         epub.setTitle(args.title, args.subtitle)
+        fileModified = True
+    #if
+
+    if args.author != None:
+        epub.setAuthor(args.author)
         fileModified = True
     #if
 
