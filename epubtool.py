@@ -307,33 +307,66 @@ class Epub:
     #setAuthor
 
     def setSeriesInfo(self, seriesInfo):
-        """Find <metadata> element and add series info at the end."""
+        """Set series info. Parameter seriesInfo is an array: [seriesName, numberInSeries]"""
 
-        seriesTitle, seriesNumber = seriesInfo
-
-        # add series info to metadata
-        # <meta property="belongs-to-collection" id="c01">
-        #     The Lord of the Rings
-        # </meta>
-        # <meta refines="#c01" property="collection-type">set</meta>
-        # <meta refines="#c01" property="group-position">2</meta>
         if settings['epub3']:
-            meta = ET.SubElement(self._metadataNode, 'meta', {'property': 'belongs-to-collection', 'id':'series0'})
-            meta.text = seriesTitle
-            meta = ET.SubElement(self._metadataNode, 'meta', {'refines': '#series0', 'property': 'collection-type'})
-            meta.text = 'set'
-            meta = ET.SubElement(self._metadataNode, 'meta', {'refines': '#series0', 'property': 'group-position'})
-            meta.text = f'{seriesNumber}'
+            self.setSeriesInfoEpub3(seriesInfo)
         #if
 
-        # Add series info to metadata in Calibre format
-        # <meta name="calibre:series" content="The Lord of the Rings"/>
-        # <meta name="calibre:series_index" content="2"/>
         if settings['calibre']:
-            meta = ET.SubElement(self._metadataNode, 'meta', {'name': 'calibre:series', 'content': seriesTitle})
-            meta = ET.SubElement(self._metadataNode, 'meta', {'name': 'calibre:series_index', 'content': seriesNumber})
+            self.setSeriesInfoCalibre(seriesInfo)
         #if
     #setSeriesInfo
+
+    def setSeriesInfoEpub3(self, seriesInfo):
+        seriesTitle, seriesNumber = seriesInfo
+
+        # find any previous epub3 series info, and delete it
+        seriesNodes = self._metadataNode.findall('./meta[@property="belongs-to-collection"]') + \
+            self._metadataNode.findall('./ns0:meta[@property="belongs-to-collection"]', namespaces=Epub.NS)
+        for node in seriesNodes:
+            self.deleteNode(node)
+        #for
+
+        # add epub3 series info to metadata
+        #   <ns0:meta property="belongs-to-collection" id="c01">The Lord of the Rings</ns0:meta>
+        #   <ns0:meta refines="#c01" property="collection-type">set</ns0:meta>
+        #   <ns0:meta refines="#c01" property="group-position">2</ns0:meta>
+        idName = 'series0'
+        meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], \
+                             attrib={'property': 'belongs-to-collection', 'id': idName})
+        meta.text = seriesTitle
+        meta.tail = '\n'
+        meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], \
+                             attrib={'property': 'collection-type', 'refines': f'#{idName}'})
+        meta.text = 'set'
+        meta.tail = '\n'
+        meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], \
+                             attrib={'property': 'group-position', 'refines': f'#{idName}'})
+        meta.text = f'{seriesNumber}'
+        meta.tail = '\n'
+    #setSeriesInfoEpub3
+
+    def setSeriesInfoCalibre(self, seriesInfo):
+        seriesTitle, seriesNumber = seriesInfo
+
+        # find any previous calibre series info, and delete it
+        seriesNodes = self._metadataNode.findall('./ns0:meta[@name="calibre:series"]', namespaces=Epub.NS) + \
+            self._metadataNode.findall('./meta[@name="calibre:series"]') + \
+            self._metadataNode.findall('./ns0:meta[@name="calibre:series_index"]', namespaces=Epub.NS) + \
+            self._metadataNode.findall('./meta[@name="calibre:series_index"]')
+        for node in seriesNodes:
+            self.deleteNode(node)
+        #for
+
+        # Add series info to metadata in Calibre format
+        #   <meta name="calibre:series" content="The Lord of the Rings"/>
+        #   <meta name="calibre:series_index" content="2"/>
+        meta = ET.SubElement(self._metadataNode, 'meta', {'name': 'calibre:series', 'content': seriesTitle})
+        meta.tail = '\n'
+        meta = ET.SubElement(self._metadataNode, 'meta', {'name': 'calibre:series_index', 'content': seriesNumber})
+        meta.tail = '\n'
+    #setSeriesInfoCalibre
 
 #Epub
 
