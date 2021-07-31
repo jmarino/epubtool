@@ -232,43 +232,80 @@ class Epub:
     #deleteNode
 
     def setTitle(self, newTitle, newSubtitle):
-        titleNodes = self._xml.findall('ns0:metadata/dc:title', namespaces=Epub.NS)
-        if len(titleNodes) == 0:
-            raise Exception("Can't find title in metadata")
-        #
+        """Set title and/or subtitle.
+        The way we do this is: extract all title elements and their refines from the document.
+        - Only title is provided: create a new title and add it, no refines
+        - Only subtitle is provided: reuse title and add subtitle, setting 2 refines each: 'title-type' and 'display-seq'
+        - Both provided: set title and subtitle, setting 2 refines each
+        """
 
-        maintitleNode = None
-        subtitleNode = None
-        for node in titleNodes:
-            refinesNode = self.findRefines(node, 'title-type')
-            if refinesNode != None:
-                if refinesNode.text == "main":
-                    maintitleNode = node
-                elif refinesNode.text == 'subtitle':
-                    subtitleNode = node
+        if newTitle == None and newSubtitle == None:
+            return
+
+        # Locate title nodes (and their refines) and extract title and subtitle
+        oldTitle = None
+        oldSubtitle = None
+        metaNodes = list(self._metadataNode)
+        firstIndex = len(metaNodes)
+        titleNodes = list()
+        for node in self._metadataNode.findall('./dc:title', namespaces=Epub.NS):
+            titleNodes.append(node)
+            firstIndex = min(firstIndex, metaNodes.index(node))
+            idName = node.attrib['id'] if ('id' in node.attrib) else None
+            if idName == None:
+                oldTitle = node.text
+                continue
+            for refines in self._metadataNode.findall(f'./*[@refines="#{idName}"]'):
+                titleNodes.append(refines)
+                firstIndex = min(firstIndex, metaNodes.index(refines))
+
+                if ('property' in refines.attrib) and (refines.attrib['property'] == 'title-type'):
+                    if refines.text == 'main':
+                        oldTitle = node.text
+                    elif refines.text == 'subtitle':
+                        oldSubtitle = node.text
+                    #if
                 #if
-            #if
+            #for refines
+        #for title nodes
+
+        # delete title nodes and refines
+        for node in titleNodes:
+            self._metadataNode.remove(node)
         #for
-        if maintitleNode == None:
-            maintitleNode = titleNodes[0]
 
-        if newTitle != None:
-            maintitleNode.text = newTitle
-            maintitleNode.tail = '\n'
-        #if
+        firstIndex = max(firstIndex, 0)
 
-        if newSubtitle == None:
-            # no subtitle provided and file had one, delete it
-            if subtitleNode != None:
-                self.deleteNode(subtitleNode)
-            #
-        else:
-            # subtitle provided, overwrite existing or create new one
-            if subtitleNode == None:
-                subtitleNode = ET.SubElement(self._metadataNode, '{%s}title' % Epub.NS['dc'])
-            #if
-            subtitleNode.text = newSubtitle
-            subtitleNode.tail = '\n'
+        # add new title item
+        titleId = 'maintitle'
+        node = ET.Element('{%s}title' % Epub.NS['dc'], attrib={'id': f'{titleId}'})
+        node.text = newTitle if (newTitle != None) else oldTitle
+        node.tail = '\n'
+        self._metadataNode.insert(firstIndex, node)
+        node = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'property': 'title-type', 'refines': f'#{titleId}'})
+        node.text = 'main'
+        node.tail = '\n'
+        self._metadataNode.insert(firstIndex+1, node)
+        node = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'property': 'display-seq', 'refines': f'#{titleId}'})
+        node.text = '1'
+        node.tail = '\n'
+        self._metadataNode.insert(firstIndex+2, node)
+        firstIndex += 3
+
+        if newSubtitle != None:
+            titleId = 'subtitle'
+            node = ET.Element('{%s}title' % Epub.NS['dc'], attrib={'id': f'{titleId}'})
+            node.text = newSubtitle
+            node.tail = '\n'
+            self._metadataNode.insert(firstIndex, node)
+            node = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'property': 'title-type', 'refines': f'#{titleId}'})
+            node.text = 'subtitle'
+            node.tail = '\n'
+            self._metadataNode.insert(firstIndex+1, node)
+            node = ET.Element('{%s}meta' % Epub.NS['ns0'], attrib={'property': 'display-seq', 'refines': f'#{titleId}'})
+            node.text = '2'
+            node.tail = '\n'
+            self._metadataNode.insert(firstIndex+2, node)
         #if
     #setTitle
 
