@@ -99,10 +99,12 @@ class Epub:
     def getTitle(self):
         title = None
         subtitle = None
-        titleNodes = self._metadataNode.findall('dc:title', namespaces=Epub.NS)
+        titleNodes = self._metadataNode.findall('./dc:title', namespaces=Epub.NS)
         for node in titleNodes:
             refinesNode = self.findRefines(node, 'title-type')
-            if refinesNode != None:
+            if refinesNode == None:
+                title = node.text
+            else:
                 if refinesNode.text == 'main':
                     title = node.text
                 elif refinesNode.text == 'subtitle':
