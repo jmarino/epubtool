@@ -9,7 +9,7 @@ import sys
 
 
 #**TODO** remove old series info before adding new one
-
+#**TODO** store fileModified inside Epub class
 
 settings = {'epub3': False,
             'calibre': True
@@ -378,7 +378,7 @@ class Epub:
         meta.tail = '\n'
         meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], \
                              attrib={'property': 'collection-type', 'refines': f'#{idName}'})
-        meta.text = 'set'
+        meta.text = 'series'
         meta.tail = '\n'
         meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], \
                              attrib={'property': 'group-position', 'refines': f'#{idName}'})
@@ -401,9 +401,9 @@ class Epub:
         # Add series info to metadata in Calibre format
         #   <meta name="calibre:series" content="The Lord of the Rings"/>
         #   <meta name="calibre:series_index" content="2"/>
-        meta = ET.SubElement(self._metadataNode, 'meta', {'name': 'calibre:series', 'content': seriesTitle})
+        meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], {'name': 'calibre:series', 'content': seriesTitle})
         meta.tail = '\n'
-        meta = ET.SubElement(self._metadataNode, 'meta', {'name': 'calibre:series_index', 'content': seriesNumber})
+        meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], {'name': 'calibre:series_index', 'content': seriesNumber})
         meta.tail = '\n'
     #setSeriesInfoCalibre
 
