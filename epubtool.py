@@ -3,6 +3,7 @@
 import argparse
 import zipfile
 import xml.etree.ElementTree as ET
+from pathlib import Path
 import re
 import copy
 import sys
@@ -22,7 +23,7 @@ class Epub:
           'dc': 'http://purl.org/dc/elements/1.1/'}
 
     def __init__(self, fileName):
-        self._fileName = fileName
+        self._fileName = Path(fileName)
         self._contentFileName = None
         self._xml = None               # ElementTree main object
         self._metadataNode = None      # metadata node
@@ -174,23 +175,25 @@ class Epub:
         title, subtitle = self.getTitle()
         authors = self.getAuthors()
 
-        print(f'File: {self._fileName}')
-        print(f'  Format: ePub version {self._version}')
-        print(f'  Title: {title}')
-        if subtitle != None:
-            print(f'         {subtitle}')
+        print(f'File:\t{self._fileName.name} (epub {self._version})')
+        print(f'Info:\t', end="")
+        if subtitle == None:
+            print(f'"{title}"')
+        else:
+            print(f'"{title}: {subtitle}"')
 
         if len(authors) == 1:
-            print(f'  Author: {authors[0]}')
+            print(f'\t{authors[0]}')
         else:
             authorsStr = ", ".join(authors)
-            print(f'  Authors: {authorsStr}')
+            print(f'\t{authorsStr}')
         #if
 
         seriesName, seriesNumber, source = self.getSeries()
         if seriesName != None and seriesNumber != None:
-            print(f"  Series: {seriesName} : {seriesNumber}  ({source})")
+            print(f"Series:\t{seriesName} : {seriesNumber}  ({source})")
         #if
+        print()
     #printInfo
 
     def findRefinesById(self, idName, propertyName):
