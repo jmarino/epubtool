@@ -354,6 +354,17 @@ class Epub:
     def setSeriesInfo(self, seriesInfo):
         """Set series info. Parameter seriesInfo is an array: [seriesName, numberInSeries]"""
 
+        # find any previous epub3 or calibre series info and delete it
+        seriesNodes = self._metadataNode.findall('./meta[@property="belongs-to-collection"]') + \
+            self._metadataNode.findall('./ns0:meta[@property="belongs-to-collection"]', namespaces=Epub.NS) + \
+            self._metadataNode.findall('./ns0:meta[@name="calibre:series"]', namespaces=Epub.NS) + \
+            self._metadataNode.findall('./meta[@name="calibre:series"]') + \
+            self._metadataNode.findall('./ns0:meta[@name="calibre:series_index"]', namespaces=Epub.NS) + \
+            self._metadataNode.findall('./meta[@name="calibre:series_index"]')
+        for node in seriesNodes:
+            self.deleteNode(node)
+        #for
+
         if settings['epub3']:
             self.setSeriesInfoEpub3(seriesInfo)
         #if
@@ -365,13 +376,6 @@ class Epub:
 
     def setSeriesInfoEpub3(self, seriesInfo):
         seriesTitle, seriesNumber = seriesInfo
-
-        # find any previous epub3 series info, and delete it
-        seriesNodes = self._metadataNode.findall('./meta[@property="belongs-to-collection"]') + \
-            self._metadataNode.findall('./ns0:meta[@property="belongs-to-collection"]', namespaces=Epub.NS)
-        for node in seriesNodes:
-            self.deleteNode(node)
-        #for
 
         # add epub3 series info to metadata
         #   <ns0:meta property="belongs-to-collection" id="c01">The Lord of the Rings</ns0:meta>
@@ -395,15 +399,6 @@ class Epub:
 
     def setSeriesInfoCalibre(self, seriesInfo):
         seriesTitle, seriesNumber = seriesInfo
-
-        # find any previous calibre series info, and delete it
-        seriesNodes = self._metadataNode.findall('./ns0:meta[@name="calibre:series"]', namespaces=Epub.NS) + \
-            self._metadataNode.findall('./meta[@name="calibre:series"]') + \
-            self._metadataNode.findall('./ns0:meta[@name="calibre:series_index"]', namespaces=Epub.NS) + \
-            self._metadataNode.findall('./meta[@name="calibre:series_index"]')
-        for node in seriesNodes:
-            self.deleteNode(node)
-        #for
 
         # Add series info to metadata in Calibre format
         #   <meta name="calibre:series" content="The Lord of the Rings"/>
