@@ -27,6 +27,7 @@ class Epub:
         self._xml = None               # ElementTree main object
         self._metadataNode = None      # metadata node
         self._version = None
+        self._fileModified = False
     #__init__
 
     def findContent(self, zfile):
@@ -64,6 +65,9 @@ class Epub:
     #readFile
 
     def saveFile(self):
+        if self._fileModified == False:
+            return
+
         elem_tree = ET.ElementTree(self._xml)
 
         new_zip_filename = self._fileName + '.new'
@@ -307,6 +311,7 @@ class Epub:
             node.tail = '\n'
             self._metadataNode.insert(firstIndex+2, node)
         #if
+        self._fileModified = True
     #setTitle
 
     def setAuthor(self, newAuthors):
@@ -343,6 +348,7 @@ class Epub:
                 index += 1
             #if
         #for
+        self._fileModified = True
     #setAuthor
 
     def setSeriesInfo(self, seriesInfo):
@@ -384,6 +390,7 @@ class Epub:
                              attrib={'property': 'group-position', 'refines': f'#{idName}'})
         meta.text = f'{seriesNumber}'
         meta.tail = '\n'
+        self._fileModified = True
     #setSeriesInfoEpub3
 
     def setSeriesInfoCalibre(self, seriesInfo):
@@ -405,6 +412,7 @@ class Epub:
         meta.tail = '\n'
         meta = ET.SubElement(self._metadataNode, '{%s}meta' % Epub.NS['ns0'], {'name': 'calibre:series_index', 'content': seriesNumber})
         meta.tail = '\n'
+        self._fileModified = True
     #setSeriesInfoCalibre
 
 #Epub
@@ -465,17 +473,14 @@ def main():
 
     if args.series != None:
         epub.setSeriesInfo(args.series)
-        fileModified = True
     #if
 
     if args.title != None or args.subtitle != None:
         epub.setTitle(args.title, args.subtitle)
-        fileModified = True
     #if
 
     if args.author != None:
         epub.setAuthor(args.author)
-        fileModified = True
     #if
 
     if args.info:      # -i
@@ -485,9 +490,7 @@ def main():
         epub.printMetadata()
     #if
 
-    if fileModified:
-        epub.saveFile()
-    #if
+    epub.saveFile()
 #main
 
 if __name__ == "__main__":
