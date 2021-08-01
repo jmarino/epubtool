@@ -138,6 +138,38 @@ class Epub:
         return authors
     #getAuthors
 
+    def getSeries(self):
+        # check for epub3 series info
+        nameNode = self._metadataNode.find("./meta[@property='belongs-to-collection']")
+        if nameNode == None:
+            nameNode = self._metadataNode.find("./ns0:meta[@property='belongs-to-collection']", namespaces=Epub.NS)
+        #if
+        refines = self.findRefines(nameNode, 'group-position')
+        if refines != None:
+            name = nameNode.text
+            number = refines.text
+            return name, number, 'epub3'
+        #if
+
+        # check for calibre series info
+        nameNode = self._metadataNode.find("./meta[@name='calibre:series']")
+        if nameNode == None:
+            nameNode = self._metadataNode.find("./ns0:meta[@name='calibre:series']", namespaces=Epub.NS)
+        #if
+        numberNode = self._metadataNode.find("./meta[@name='calibre:series_index']")
+        if numberNode == None:
+            numberNode = self._metadataNode.find("./ns0:meta[@name='calibre:series_index']", namespaces=Epub.NS)
+        #if
+        if nameNode == None or numberNode == None or \
+           not 'content' in nameNode.attrib or not 'content' in numberNode.attrib:
+            return None, None, None
+        #
+
+        name = nameNode.attrib['content']
+        number = numberNode.attrib['content']
+        return name, number, 'Calibre'
+    #getSeries
+
     def printInfo(self):
         title, subtitle = self.getTitle()
         authors = self.getAuthors()
@@ -155,25 +187,9 @@ class Epub:
             print(f'  Authors: {authorsStr}')
         #if
 
-        calName_ele = self._metadataNode.find("meta[@name='calibre:series']")
-        calNumber_ele = self._metadataNode.find("meta[@name='calibre:series_index']")
-        calName = calName_ele.attrib['content'] if calName_ele!=None else ''
-        calNumber = calNumber_ele.attrib['content'] if calNumber_ele!=None else ''
-
-        epub3Name_ele = self._metadataNode.find("meta[@property='belongs-to-collection']")
-        epub3Number = ''
-        if epub3Name_ele:
-            seriesId = epub3Name_ele.attrib['id']
-            epub3Number_ele = self._metadataNode.find("meta[@refines='{}']".format(seriesId))
-            epub3Number = epub3Number_ele.text if epub3Number_ele!=None else ''
-        #fi
-        epub3Name = epub3Name_ele.text if epub3Name_ele!=None else ''
-
-        if len(calName) > 0:
-            print(f"  Series: {calName} : {calNumber}  (calibre)")
-        #if
-        if len(epub3Name) > 0:
-            print(f"  Series: {epub3Name} : {epub3Number}  (epub3)")
+        seriesName, seriesNumber, source = self.getSeries()
+        if seriesName != None and seriesNumber != None:
+            print(f"  Series: {seriesName} : {seriesNumber}  ({source})")
         #if
     #printInfo
 
