@@ -70,8 +70,8 @@ class Epub:
             return
 
         elem_tree = ET.ElementTree(self._xml)
+        new_zip_filename = self._fileName.parent / Path(self._fileName.name + '.new')
 
-        new_zip_filename = self._fileName + '.new'
         # create a temp copy of the archive without filename
         with zipfile.ZipFile(self._fileName, 'r') as zin:
             with zipfile.ZipFile(new_zip_filename, 'w') as zout:
